@@ -1,5 +1,15 @@
 VERIFICATION PERFORMED
 
+Hosted station preparation
+31 automated tests passed, including the server-side station tests.
+Local HTTP integration: status enabled, unauthenticated feed 401, sign-in 200,
+authenticated real ThingSpeak feed 200 with five entries and latest entry #5.
+Requests for .env and lib/station.js returned 403. Browser sign-in showed the
+real total of four parcels; refresh restored the session; Lock returned to
+the sign-in dialog and demo data. Browser console inspection found no errors.
+The static build succeeded and copies only the explicit public-asset list.
+Production deployment verification will be recorded after publication.
+
 Follow-up on 25 November 2026
 All 23 automated tests passed again. The local Git repository was initialized
 through WSL. Authenticated reading of private channel 3585570 was verified

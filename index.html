@@ -24,7 +24,7 @@
   <main id="overview">
     <header class="topbar">
       <span class="breadcrumb">ESP32 <span>/</span> Handoff verifier</span>
-      <div class="top-actions"><span id="mode-pill" class="pill">Demo data</span><button id="settings-button" class="button small">Connect ThingSpeak</button></div>
+      <div class="top-actions"><span id="mode-pill" class="pill">Demo data</span><button id="settings-button" class="button small">Connect ThingSpeak</button><button id="lock-station" class="text-button" hidden>Lock</button></div>
     </header>
     <div class="content">
       <div class="page-heading"><div><p class="eyebrow">Parcel operations / Two-tray station</p><h1>Handoff overview</h1><p class="subtitle">Confirm arrivals in Tray A and Tray B. Review parcels that need attention.</p></div><button class="button" id="refresh"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.5-2L20 8M4 16l2.4 3A7 7 0 0 0 18 17"/></svg>Refresh data</button></div>
@@ -70,6 +70,14 @@
   </main>
 
   <dialog id="setup-dialog" class="dialog setup-dialog" aria-labelledby="setup-title">
+    <form id="station-form" hidden>
+      <div class="dialog-heading"><div><p class="eyebrow">Parcel handoff verifier</p><h2 id="station-title">Open live station</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close station sign-in">×</button></div>
+      <p class="dialog-intro">Enter the station password to view the live Tray A and Tray B handoffs.</p>
+      <label for="station-password">Station password</label><input id="station-password" type="password" autocomplete="current-password" required>
+      <p id="station-error" class="form-error" role="status" hidden></p>
+      <div class="dialog-buttons"><button type="button" id="station-demo" class="button">Use demo mode</button><button class="button primary" id="station-submit" type="submit">Open station</button></div>
+      <p class="field-note">Your session lasts up to 8 hours. Use Lock when you finish on a shared device.</p>
+    </form>
     <form id="connection-form"><div class="dialog-heading"><div><p class="eyebrow">Live connection</p><h2 id="setup-title">Connect your channel</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close connection settings">×</button></div>
       <p class="dialog-intro">Read the same seven fields your ESP32 already uploads.</p>
       <label for="channel-id">ThingSpeak Channel ID</label><input id="channel-id" name="channel" inputmode="numeric" pattern="[0-9]+" value="3585570" required autocomplete="off">

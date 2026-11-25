@@ -1,5 +1,5 @@
 import { outcomes, trayName, ingest, makeDemo } from "./core.js";
-import { fetchEntries } from "./api.js";
+import { fetchEntries, fetchHostedEntries, stationRequest, stationStatus } from "./api.js";
 
 const $ = (id) => document.getElementById(id);
 const storage = {
@@ -7,6 +7,7 @@ const storage = {
   set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
 };
 let config;
+let station = { enabled: false };
 try { config = JSON.parse(sessionStorage.getItem("parcel-connection")); } catch {}
 let mode = config ? "live" : "demo";
 let records = mode === "demo" ? makeDemo() : [];
@@ -245,6 +246,8 @@ function render() {
   $("mode-pill").textContent = mode === "demo" ? "Demo data" : "ThingSpeak";
   $("mode-pill").classList.toggle("live", mode === "live");
   $("settings-button").textContent = mode === "demo" ? "Connect ThingSpeak" : "Channel settings";
+  if (station.enabled) $("settings-button").textContent = "Open live station";
+  $("lock-station").hidden = mode !== "live" || !config?.hosted;
   $("connection-copy").textContent = mode === "demo"
     ? "Demo mode · try a delivery with the controls below"
     : "Channel " + config.channel + " · checking for updates every 15 seconds";
@@ -266,7 +269,8 @@ async function poll() {
   controller = new AbortController();
   const timeout = setTimeout(() => controller?.abort(), 10000);
   try {
-    const entries = await fetchEntries(config.channel, config.key, controller.signal);
+    const entries = config.hosted ? await fetchHostedEntries(controller.signal)
+      : await fetchEntries(config.channel, config.key, controller.signal);
     if (currentRevision !== revision) return;
     const result = ingest(latest, entries);
     latest = result.latest;
@@ -314,11 +318,63 @@ function demoMode() {
 }
 function openSettings() {
   connectionRequest++;
+  $("connection-form").hidden = station.enabled;
+  $("station-form").hidden = !station.enabled;
+  $("setup-dialog").setAttribute("aria-labelledby", station.enabled ? "station-title" : "setup-title");
+  $("station-error").hidden = true;
   $("channel-id").value = config?.channel || "3585570";
   $("read-key").value = config?.key || "";
   $("setup-error").hidden = true;
   $("setup-dialog").showModal();
+  if (station.enabled) $("station-password").focus();
 }
+
+function connectLive(entries, connection) {
+  cancelPolling();
+  mode = "live";
+  config = connection;
+  try { sessionStorage.setItem("parcel-connection", JSON.stringify(config)); } catch {}
+  latest = null;
+  loadMonitor();
+  const result = ingest(latest, entries);
+  latest = result.latest;
+  records = entries;
+  addAlerts(result.alerts);
+  lastSync = Date.now();
+  saveMonitor();
+  $("error-banner").hidden = true;
+  $("setup-dialog").close();
+  $("toast-container").replaceChildren();
+  toast("Channel connected", entries.length ? "New uploads will appear automatically." : "The channel is empty. Complete a parcel test on the ESP32.", true);
+  render();
+  timer = setTimeout(poll, 15000);
+}
+
+$("station-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const attempt = ++connectionRequest;
+  $("station-submit").disabled = true;
+  $("station-error").hidden = true;
+  try {
+    await stationRequest("POST", { password: $("station-password").value });
+    $("station-password").value = "";
+    const entries = await fetchHostedEntries();
+    if (attempt !== connectionRequest || !$("setup-dialog").open) return;
+    connectLive(entries, { channel: station.channel, hosted: true });
+  } catch (error) {
+    if (attempt !== connectionRequest) return;
+    $("station-error").textContent = error.message;
+    $("station-error").hidden = false;
+  } finally { $("station-submit").disabled = false; }
+});
+$("station-demo").onclick = demoMode;
+$("lock-station").onclick = async () => {
+  try {
+    await stationRequest("DELETE");
+    demoMode();
+    openSettings();
+  } catch { toast("Station could not lock", "Check your connection and try again."); }
+};
 
 $("connection-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -335,23 +391,7 @@ $("connection-form").addEventListener("submit", async (event) => {
   try {
     const entries = await fetchEntries(channel, key, abort.signal);
     if (attempt !== connectionRequest || captured !== revision || !$("setup-dialog").open) return;
-    cancelPolling();
-    mode = "live";
-    config = { channel, key };
-    try { sessionStorage.setItem("parcel-connection", JSON.stringify(config)); } catch {}
-    loadMonitor();
-    const result = ingest(latest, entries);
-    latest = result.latest;
-    records = entries;
-    addAlerts(result.alerts);
-    lastSync = Date.now();
-    saveMonitor();
-    $("error-banner").hidden = true;
-    $("setup-dialog").close();
-    $("toast-container").replaceChildren();
-    toast("Channel connected", entries.length ? "New uploads will appear automatically." : "The channel is empty. Complete a parcel test on the ESP32.", true);
-    render();
-    timer = setTimeout(poll, 15000);
+    connectLive(entries, { channel, key });
   } catch (error) {
     if (attempt !== connectionRequest || !$("setup-dialog").open) return;
     $("setup-error").textContent = error.name === "AbortError" ? "Connection timed out. Check your network and try again." : error.message;
@@ -426,4 +466,13 @@ document.addEventListener("visibilitychange", () => {
 if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("./sw.js").catch(() => {});
 loadMonitor();
 render();
+station = await stationStatus();
+if (station.enabled && station.authenticated) {
+  config = { channel: station.channel, hosted: true };
+  mode = "live";
+  latest = null;
+  loadMonitor();
+} else if (config?.hosted) demoMode();
+render();
 if (mode === "live") poll();
+else if (station.enabled) openSettings();
