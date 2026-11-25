@@ -36,7 +36,6 @@ Read API Key in `.env`; no dashboard password or browser setup is needed.
 | --- | --- |
 | `THINGSPEAK_CHANNEL_ID` | The ESP32's ThingSpeak channel |
 | `THINGSPEAK_READ_API_KEY` | Server-only channel Read key |
-| `THINGSPEAK_START_AFTER_ENTRY` | Exclude historical entries up to this ID (5 for this station) |
 
 `.env` is ignored by Git. `.env.example` contains placeholders only. The build
 copies a fixed list of public assets into `dist`; it does not embed environment
@@ -59,10 +58,10 @@ Vercel runs `api/station.js` as a Node.js function. The function reads only the
 configured channel. The dashboard and its sanitized feed are public; visitors
 do not need a password. No cloud write endpoint is exposed.
 
-Integration-test entries #1–#5 are excluded from the live dashboard, chart, CSV
-and alert history. The original rows remain in ThingSpeak. Until entry #6 or
-later arrives, the dashboard shows an empty live feed and zero counts. New
-uploads show the ESP32 counters as reported; counts restart when the board resets.
+The dashboard displays the latest 100 entries already stored in ThingSpeak and
+continues to show new ESP32 uploads. Existing cloud history is not filtered out.
+Counts are shown as reported by the ESP32 and restart when the board resets.
+Dashboard-generated demo data and demo controls are removed.
 
 ## ThingSpeak field map
 
@@ -87,7 +86,7 @@ Open the dashboard's **Email alert setup** page for the MATLAB template and clou
 rules. Email runs in ThingSpeak and works independently of the dashboard page.
 On 25 November 2026, labeled cloud test entry #5 produced a dashboard alert and
 ThingSpeak marked its email **sent**. Repeating the analysis did not resend it.
-The live dashboard now opens without sign-in and excludes those test entries.
+The live dashboard opens without sign-in and displays the existing ThingSpeak history.
 No simulated results are generated in the dashboard.
 
 ```sh

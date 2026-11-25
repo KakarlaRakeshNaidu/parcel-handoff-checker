@@ -8,7 +8,7 @@ const feed = feeds => async () => Response.json({ channel: { api_key: "private m
 
 test("live status requires only channel and Read key, without a password", async () => {
   const response = await handleStation(request("GET", "?status=1"), env);
-  assert.deepEqual(await response.json(), { enabled: true, channel: "3585570", startAfterEntry: 5 });
+  assert.deepEqual(await response.json(), { enabled: true, channel: "3585570", startAfterEntry: 0 });
   assert.equal((await handleStation(request(), {})).status, 503);
   assert.equal((await handleStation(request(), { ...env, THINGSPEAK_CHANNEL_ID: "bad" })).status, 503);
 });
@@ -29,20 +29,15 @@ test("visitors can read live data without cookies and credentials remain server-
   assert.deepEqual(body.channel, { id: 3585570 });
   assert.ok(!JSON.stringify(body).includes(env.THINGSPEAK_READ_API_KEY));
 });
-test("historical test entries are excluded while new ESP32 entries remain", async () => {
+test("existing ThingSpeak history and new ESP32 entries are both visible", async () => {
   const response = await handleStation(request(), env, feed([
     { entry_id: 1 }, { entry_id: 4 }, { entry_id: 5 }, { entry_id: 6 }, { entry_id: 7 }
   ]));
-  assert.deepEqual((await response.json()).feeds.map(row => row.entry_id), [6, 7]);
-  const empty = await handleStation(request(), env, feed([{ entry_id: 5 }]));
+  assert.deepEqual((await response.json()).feeds.map(row => row.entry_id), [1, 4, 5, 6, 7]);
+  const existing = await handleStation(request(), env, feed([{ entry_id: 5 }]));
+  assert.equal((await existing.json()).feeds[0].entry_id, 5);
+  const empty = await handleStation(request(), env, feed([]));
   assert.deepEqual((await empty.json()).feeds, []);
-});
-test("other channels retain their data and support an explicit starting entry", async () => {
-  const other = { ...env, THINGSPEAK_CHANNEL_ID: "123" };
-  const response = await handleStation(request(), other, feed([{ entry_id: 1 }]));
-  assert.equal((await response.json()).feeds.length, 1);
-  const cutoff = await handleStation(request(), { ...other, THINGSPEAK_START_AFTER_ENTRY: "10" }, feed([{ entry_id: 10 }, { entry_id: 11 }]));
-  assert.deepEqual((await cutoff.json()).feeds.map(row => row.entry_id), [11]);
 });
 test("public endpoint is read-only and does not accept login or cloud writes", async () => {
   for (const method of ["POST", "DELETE", "PUT"]) {

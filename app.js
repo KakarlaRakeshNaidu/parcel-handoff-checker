@@ -164,7 +164,7 @@ function renderTable() {
     const td = document.createElement("td");
     td.colSpan = 7;
     td.className = "empty-cell";
-    td.textContent = records.length ? "No updates match this filter." : "Waiting for the first live ESP32 upload. Test entries are excluded.";
+    td.textContent = records.length ? "No updates match this filter." : "No ThingSpeak updates yet. New ESP32 uploads will appear automatically.";
     tr.append(td);
     $("activity-body").append(tr);
   }
