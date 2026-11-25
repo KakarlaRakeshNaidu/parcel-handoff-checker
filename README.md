@@ -82,8 +82,8 @@ when the ESP32 resets. An idle feed does not necessarily mean the board is offli
 
 ## Email alerts and testing
 
-Open the dashboard's **Email alert setup** page for the MATLAB template and cloud
-rules. Email runs in ThingSpeak and works independently of the dashboard page.
+Wrong-tray emails run in ThingSpeak independently of the dashboard page.
+The analysis source remains in `thingspeak/parcel_email_alert.m`.
 On 25 November 2026, labeled cloud test entry #5 produced a dashboard alert and
 ThingSpeak marked its email **sent**. Repeating the analysis did not resend it.
 The live dashboard opens without sign-in and displays the existing ThingSpeak history.

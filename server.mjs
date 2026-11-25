@@ -27,7 +27,7 @@ const server = http.createServer(async (request, response) => {
     }
     const name = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname.slice(1));
     const path = resolve(root, name);
-    const publicFiles = ["index.html", "style.css", "app.js", "core.js", "api.js", "sw.js", "setup.html", "setup.js", "thingspeak/parcel_email_alert.m"];
+    const publicFiles = ["index.html", "style.css", "app.js", "core.js", "api.js", "sw.js", "setup.html", "thingspeak/parcel_email_alert.m"];
     if (!path.startsWith(root + sep) || !publicFiles.includes(name)) {
       response.writeHead(403).end("Forbidden");
       return;
