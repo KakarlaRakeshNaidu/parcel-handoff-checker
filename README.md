@@ -1,5 +1,7 @@
 # Parcel Handoff Checker
 
+Live dashboard: https://parcel-handoff-checker.vercel.app/
+
 An ESP32 project that verifies whether a parcel reaches its intended tray.
 An entry sensor starts a handoff, a rotary encoder selects Tray A or B, and
 two tray sensors confirm the destination. ThingSpeak stores the results;
@@ -83,6 +85,8 @@ Open the dashboard's **Email alert setup** page for the MATLAB template and clou
 rules. Email runs in ThingSpeak and works independently of the dashboard page.
 On 25 November 2026, labeled cloud test entry #5 produced a dashboard alert and
 ThingSpeak marked its email **sent**. Repeating the analysis did not resend it.
+The Vercel deployment was also tested: station sign-in, real feed reading,
+session restoration, locking, demo alerts and the mobile layout passed.
 
 ```sh
 node --test tests/*.test.mjs

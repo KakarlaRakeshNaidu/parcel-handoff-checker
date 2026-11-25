@@ -8,7 +8,18 @@ Requests for .env and lib/station.js returned 403. Browser sign-in showed the
 real total of four parcels; refresh restored the session; Lock returned to
 the sign-in dialog and demo data. Browser console inspection found no errors.
 The static build succeeded and copies only the explicit public-asset list.
-Production deployment verification will be recorded after publication.
+Production deployed: https://parcel-handoff-checker.vercel.app/
+Vercel reported Deployed to Production. Public station feed returned 401;
+an incorrect password returned 401; correct login and authenticated feed
+returned 200. The real feed had five entries, latest #5, with four parcels.
+The cookie was Secure, HttpOnly and SameSite=Strict. Lock returned 200 with
+Max-Age=0. .env, .git/config, lib/station.js and server.mjs all returned 404.
+Published frontend scripts did not contain any of the three private values.
+Production browser checks passed: Chrome sign-in and refresh restoration;
+demo wrong-tray alert, timeout, acknowledgment, correct Tray B selection;
+real station sign-in and Lock. At 390px there was no horizontal overflow.
+The browser console had no errors. No new ThingSpeak writes or emails were
+needed for deployment testing; the earlier SENT email test is recorded below.
 
 Follow-up on 25 November 2026
 All 23 automated tests passed again. The local Git repository was initialized

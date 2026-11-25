@@ -1,5 +1,9 @@
 PARCEL HANDOFF DASHBOARD
 
+Live: https://parcel-handoff-checker.vercel.app/
+For current local and hosted setup, see README.md.
+The hosted station password is DASHBOARD_PASSWORD in your private .env file.
+
 Open Start Dashboard.cmd on Windows, then visit http://localhost:4173.
 The launcher uses Node.js from your PATH or the Node runtime installed with
 Codex. If neither is available, it asks you to install Node.js LTS.
@@ -82,7 +86,8 @@ Run "node --test tests/*.test.mjs" from this folder.
 See TESTING.txt for the actual verification performed.
 
 GIT
-This folder is a Git repository initialized through WSL (main branch).
+This folder is a Git repository initialized through WSL.
 API keys belong in the browser connection form or your private ThingSpeak
 analysis, not in committed source files. Local environment and secret files
-are excluded by .gitignore. No remote repository has been published.
+are excluded by .gitignore. The source is published at:
+https://github.com/KakarlaRakeshNaidu/parcel-handoff-checker
