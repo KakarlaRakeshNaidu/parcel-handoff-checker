@@ -1,33 +1,31 @@
-import { outcomes, trayName, ingest, makeDemo } from "./core.js";
-import { fetchEntries, fetchHostedEntries, stationRequest, stationStatus } from "./api.js";
+import { outcomes, trayName, ingest } from "./core.js";
+import { fetchHostedEntries, stationStatus } from "./api.js";
 
 const $ = (id) => document.getElementById(id);
 const storage = {
   get(key, fallback) { try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; } },
   set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} }
 };
-let config;
-let station = { enabled: false };
-try { config = JSON.parse(sessionStorage.getItem("parcel-connection")); } catch {}
-let mode = config ? "live" : "demo";
-let records = mode === "demo" ? makeDemo() : [];
-let latest = records.at(-1) || null;
+let station = { enabled: false, channel: null, startAfterEntry: 0 };
+const mode = "live";
+let records = [];
+let latest = null;
 let alerts = [];
 let controller = null;
 let timer = null;
 let revision = 0;
-let connectionRequest = 0;
 let busy = false;
 let lastSync = null;
 let audio = null;
 let selectedNotification = storage.get("parcel-notifications", false);
 let sound = storage.get("parcel-sound", false);
 
-function namespace() { return mode === "demo" ? "demo" : "channel-" + config.channel; }
+function namespace() { return "live-channel-" + station.channel + "-after-" + station.startAfterEntry; }
 function loadMonitor() {
   alerts = storage.get("parcel-alerts-" + namespace(), []).filter(a => a && a.id && a.title).slice(0, 50);
-  if (mode === "live") latest = storage.get("parcel-cursor-" + namespace(), null);
-  else alerts = [];
+  latest = storage.get("parcel-cursor-" + namespace(), null);
+  if (latest && latest.id <= station.startAfterEntry) latest = null;
+  alerts = alerts.filter(a => a.entry > station.startAfterEntry);
 }
 function saveMonitor() {
   if (mode === "live") {
@@ -84,7 +82,7 @@ function playSound() {
   } catch {}
 }
 async function notify(alert) {
-  toast(alert.title, (mode === "demo" ? "Demo · " : "") + alert.detail);
+  toast(alert.title, alert.detail);
   playSound();
   if (selectedNotification && "Notification" in window && Notification.permission === "granted") {
     try {
@@ -166,7 +164,7 @@ function renderTable() {
     const td = document.createElement("td");
     td.colSpan = 7;
     td.className = "empty-cell";
-    td.textContent = records.length ? "No updates match this filter." : "No channel updates yet. Connect ThingSpeak or try demo mode.";
+    td.textContent = records.length ? "No updates match this filter." : "Waiting for the first live ESP32 upload. Test entries are excluded.";
     tr.append(td);
     $("activity-body").append(tr);
   }
@@ -229,10 +227,10 @@ function drawChart() {
 }
 
 function render() {
-  const total = latest ? latest.correct + latest.wrong + latest.unconfirmed : null;
+  const total = latest ? latest.correct + latest.wrong + latest.unconfirmed : 0;
   for (const [id, value] of Object.entries({
-    "total-value": total, "correct-value": latest?.correct, "wrong-value": latest?.wrong,
-    "unconfirmed-value": latest?.unconfirmed
+    "total-value": total, "correct-value": latest?.correct ?? 0, "wrong-value": latest?.wrong ?? 0,
+    "unconfirmed-value": latest?.unconfirmed ?? 0
   })) $(id).textContent = value === null || value === undefined ? "—" : value.toLocaleString();
   $("success-value").textContent = total ? Math.round(latest.correct / total * 100) + "%" : "0%";
   $("expected-tray").textContent = trayName(latest?.expected);
@@ -243,18 +241,13 @@ function render() {
   $("last-outcome").className = "outcome " + badge(latest?.outcome);
   $("last-handoff").dataset.outcome = latest?.outcome ?? 0;
   $("last-update").textContent = latest ? new Date(latest.time).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
-  $("mode-pill").textContent = mode === "demo" ? "Demo data" : "ThingSpeak";
-  $("mode-pill").classList.toggle("live", mode === "live");
-  $("settings-button").textContent = mode === "demo" ? "Connect ThingSpeak" : "Channel settings";
-  if (station.enabled) $("settings-button").textContent = "Open live station";
-  $("lock-station").hidden = mode !== "live" || !config?.hosted;
-  $("connection-copy").textContent = mode === "demo"
-    ? "Demo mode · try a delivery with the controls below"
-    : "Channel " + config.channel + " · checking for updates every 15 seconds";
-  $("demo-toggle").textContent = mode === "demo" ? "Use live data" : "Switch to demo";
-  $("demo-controls").hidden = mode !== "demo";
+  $("mode-pill").textContent = "Live · ThingSpeak";
+  $("mode-pill").classList.add("live");
+  $("connection-copy").textContent = station.enabled
+    ? "Channel " + station.channel + " · live ESP32 uploads · refreshes every 15 seconds"
+    : "Connecting to the live station…";
   const aged = latest && Date.now() - latest.time > 180000;
-  $("feed-health").textContent = mode === "demo" ? "Sample data" : busy ? "Checking…" :
+  $("feed-health").textContent = busy ? "Checking…" :
     !lastSync ? "Not connected" : aged ? "No recent uploads · board may be idle" : "Feed checked " + formatTime(lastSync);
   renderTable();
   renderAlerts();
@@ -262,17 +255,19 @@ function render() {
 }
 
 async function poll() {
-  if (mode !== "live" || busy) return;
+  if (!station.enabled || busy) return;
   const currentRevision = revision;
   busy = true;
   $("refresh").disabled = true;
   controller = new AbortController();
   const timeout = setTimeout(() => controller?.abort(), 10000);
   try {
-    const entries = config.hosted ? await fetchHostedEntries(controller.signal)
-      : await fetchEntries(config.channel, config.key, controller.signal);
+    const entries = await fetchHostedEntries(controller.signal);
     if (currentRevision !== revision) return;
-    const result = ingest(latest, entries);
+    const previous = latest || (lastSync ? {
+      id: station.startAfterEntry, correct: 0, wrong: 0, unconfirmed: 0
+    } : null);
+    const result = ingest(entries.length ? previous : null, entries);
     latest = result.latest;
     records = entries;
     addAlerts(result.alerts);
@@ -295,118 +290,6 @@ async function poll() {
     }
   }
 }
-function cancelPolling() {
-  revision++;
-  clearTimeout(timer);
-  controller?.abort();
-  busy = false;
-  $("refresh").disabled = false;
-}
-function demoMode() {
-  cancelPolling();
-  mode = "demo";
-  config = null;
-  sessionStorage.removeItem("parcel-connection");
-  records = makeDemo();
-  latest = records.at(-1);
-  alerts = [];
-  lastSync = null;
-  $("error-banner").hidden = true;
-  $("toast-container").replaceChildren();
-  $("setup-dialog").close();
-  render();
-}
-function openSettings() {
-  connectionRequest++;
-  $("connection-form").hidden = station.enabled;
-  $("station-form").hidden = !station.enabled;
-  $("setup-dialog").setAttribute("aria-labelledby", station.enabled ? "station-title" : "setup-title");
-  $("station-error").hidden = true;
-  $("channel-id").value = config?.channel || "3585570";
-  $("read-key").value = config?.key || "";
-  $("setup-error").hidden = true;
-  $("setup-dialog").showModal();
-  if (station.enabled) $("station-password").focus();
-}
-
-function connectLive(entries, connection) {
-  cancelPolling();
-  mode = "live";
-  config = connection;
-  try { sessionStorage.setItem("parcel-connection", JSON.stringify(config)); } catch {}
-  latest = null;
-  loadMonitor();
-  const result = ingest(latest, entries);
-  latest = result.latest;
-  records = entries;
-  addAlerts(result.alerts);
-  lastSync = Date.now();
-  saveMonitor();
-  $("error-banner").hidden = true;
-  $("setup-dialog").close();
-  $("toast-container").replaceChildren();
-  toast("Channel connected", entries.length ? "New uploads will appear automatically." : "The channel is empty. Complete a parcel test on the ESP32.", true);
-  render();
-  timer = setTimeout(poll, 15000);
-}
-
-$("station-form").addEventListener("submit", async event => {
-  event.preventDefault();
-  const attempt = ++connectionRequest;
-  $("station-submit").disabled = true;
-  $("station-error").hidden = true;
-  try {
-    await stationRequest("POST", { password: $("station-password").value });
-    $("station-password").value = "";
-    const entries = await fetchHostedEntries();
-    if (attempt !== connectionRequest || !$("setup-dialog").open) return;
-    connectLive(entries, { channel: station.channel, hosted: true });
-  } catch (error) {
-    if (attempt !== connectionRequest) return;
-    $("station-error").textContent = error.message;
-    $("station-error").hidden = false;
-  } finally { $("station-submit").disabled = false; }
-});
-$("station-demo").onclick = demoMode;
-$("lock-station").onclick = async () => {
-  try {
-    await stationRequest("DELETE");
-    demoMode();
-    openSettings();
-  } catch { toast("Station could not lock", "Check your connection and try again."); }
-};
-
-$("connection-form").addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const channel = $("channel-id").value.trim(), key = $("read-key").value.trim();
-  if (!/^\d+$/.test(channel) || Number(channel) <= 0) return;
-  const submit = $("connect-submit");
-  submit.disabled = true;
-  submit.textContent = "Checking channel…";
-  $("setup-error").hidden = true;
-  const abort = new AbortController();
-  const captured = revision;
-  const attempt = ++connectionRequest;
-  const timeout = setTimeout(() => abort.abort(), 10000);
-  try {
-    const entries = await fetchEntries(channel, key, abort.signal);
-    if (attempt !== connectionRequest || captured !== revision || !$("setup-dialog").open) return;
-    connectLive(entries, { channel, key });
-  } catch (error) {
-    if (attempt !== connectionRequest || !$("setup-dialog").open) return;
-    $("setup-error").textContent = error.name === "AbortError" ? "Connection timed out. Check your network and try again." : error.message;
-    $("setup-error").hidden = false;
-  } finally {
-    clearTimeout(timeout);
-    submit.disabled = false;
-    submit.textContent = "Connect channel";
-  }
-});
-$("setup-dialog").addEventListener("close", () => connectionRequest++);
-
-for (const id of ["open-setup", "settings-button"]) $(id).onclick = openSettings;
-$("demo-toggle").onclick = () => mode === "demo" ? openSettings() : demoMode();
-$("start-demo").onclick = demoMode;
 document.querySelectorAll(".close-dialog").forEach(button => button.onclick = () => button.closest("dialog").close());
 $("open-alerts").onclick = () => { renderAlerts(); $("alerts-dialog").showModal(); };
 $("ack-all").onclick = () => { alerts.forEach(a => a.acknowledged = true); saveMonitor(); renderAlerts(); };
@@ -430,26 +313,14 @@ $("enable-notifications").onclick = async () => {
     $("notification-status").textContent = "Notification permission could not be requested. Dashboard alerts are active.";
   }
 };
-$("refresh").onclick = () => {
-  if (mode === "demo") { toast("Demo is ready", "Use the delivery buttons below the chart to test alerts.", true); return; }
+$("refresh").onclick = async () => {
   clearTimeout(timer);
+  if (!station.enabled) {
+    station = await stationStatus();
+    if (station.enabled) loadMonitor();
+  }
   poll();
 };
-document.querySelectorAll("[data-demo]").forEach(button => button.onclick = () => {
-  if (mode !== "demo") return;
-  prepareAudio();
-  const outcome = Number(button.dataset.demo);
-  const expected = Number($("demo-route").value);
-  const next = { ...latest, id: latest.id + 1, time: Date.now(), outcome, expected,
-    observed: outcome === 3 ? 0 : outcome === 2 ? 3 - expected : expected,
-    elapsed: outcome === 3 ? 10000 : 2340 };
-  next[["", "correct", "wrong", "unconfirmed"][outcome]]++;
-  const result = ingest(latest, [next]);
-  latest = result.latest;
-  records = [...records, next].slice(-100);
-  addAlerts(result.alerts);
-  render();
-});
 $("export-csv").onclick = () => {
   const rows = [["Entry", "Timestamp", "Correct", "Wrong", "Unconfirmed", "Last result", "Expected", "Observed", "Handoff ms"],
     ...records.map(r => [r.id, new Date(r.time).toISOString(), r.correct, r.wrong, r.unconfirmed, outcomes[r.outcome], trayName(r.expected), trayName(r.observed), r.elapsed])];
@@ -464,15 +335,14 @@ document.addEventListener("visibilitychange", () => {
   if (!document.hidden && mode === "live" && !busy) { clearTimeout(timer); poll(); }
 });
 if ("serviceWorker" in navigator && window.isSecureContext) navigator.serviceWorker.register("./sw.js").catch(() => {});
-loadMonitor();
 render();
 station = await stationStatus();
-if (station.enabled && station.authenticated) {
-  config = { channel: station.channel, hosted: true };
-  mode = "live";
-  latest = null;
+if (station.enabled) {
   loadMonitor();
-} else if (config?.hosted) demoMode();
-render();
-if (mode === "live") poll();
-else if (station.enabled) openSettings();
+  render();
+  poll();
+} else {
+  $("connection-copy").textContent = "Live station unavailable";
+  $("error-banner").textContent = "The live feed could not be opened. Refresh to retry, or check the server’s ThingSpeak configuration.";
+  $("error-banner").hidden = false;
+}

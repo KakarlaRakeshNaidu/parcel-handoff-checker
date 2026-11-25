@@ -16,7 +16,7 @@
       <a class="nav-link active" href="#overview"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Overview</a>
       <a class="nav-link" href="#activity"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg> Activity</a>
       <button class="nav-link" id="open-alerts"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg> Alerts <span class="nav-count" id="nav-count">0</span></button>
-      <button class="nav-link" id="open-setup"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M18 15V9a3 3 0 0 0-3-3H9M6 9v6a3 3 0 0 0 3 3h6"/></svg> Connection</button>
+
     </nav>
     <div class="sidebar-bottom"><span class="device-mark">ESP32 / Wi-Fi</span><p>Entry → Tray A or B<br>Each handoff verified</p><a href="setup.html">Email alert setup <span aria-hidden="true">↗</span></a></div>
   </aside>
@@ -24,11 +24,11 @@
   <main id="overview">
     <header class="topbar">
       <span class="breadcrumb">ESP32 <span>/</span> Handoff verifier</span>
-      <div class="top-actions"><span id="mode-pill" class="pill">Demo data</span><button id="settings-button" class="button small">Connect ThingSpeak</button><button id="lock-station" class="text-button" hidden>Lock</button></div>
+      <div class="top-actions"><span id="mode-pill" class="pill live">Live · ThingSpeak</span></div>
     </header>
     <div class="content">
       <div class="page-heading"><div><p class="eyebrow">Parcel operations / Two-tray station</p><h1>Handoff overview</h1><p class="subtitle">Confirm arrivals in Tray A and Tray B. Review parcels that need attention.</p></div><button class="button" id="refresh"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.5-2L20 8M4 16l2.4 3A7 7 0 0 0 18 17"/></svg>Refresh data</button></div>
-      <div id="connection-banner" class="connection-banner"><span id="connection-copy">Demo mode · sample deliveries for your lab demonstration.</span><button id="demo-toggle" class="text-button">Use live data</button></div>
+      <div id="connection-banner" class="connection-banner"><span id="connection-copy">Connecting to the live station…</span></div>
       <div id="error-banner" class="error-banner" role="status" hidden></div>
       <section class="metrics" aria-label="Parcel counts">
         <article class="metric"><div class="metric-top"><span>Total parcels</span></div><strong id="total-value">—</strong><div class="metric-caption">Since the ESP32 last reset</div></article>
@@ -42,23 +42,17 @@
           <div class="panel-heading"><div><h2>Delivery activity</h2><p>Deliveries between cloud updates</p></div><select id="chart-window" aria-label="Number of updates to display"><option value="16">Last 16 updates</option><option value="50">Last 50 updates</option><option value="100">Last 100 updates</option></select></div>
           <div class="legend"><span><i class="legend-dot green"></i> Correct</span><span><i class="legend-dot red"></i> Wrong tray</span><span><i class="legend-dot amber"></i> Unconfirmed</span></div>
           <div class="chart-wrap"><canvas id="activity-chart" role="img" aria-label="Parcel outcome chart. The recent updates table below contains the recorded counts."></canvas><p id="chart-empty" hidden>No parcel data yet. Complete a handoff to see activity.</p></div>
-          <div class="chart-footer"><span>Latest <b id="last-update">—</b></span><span id="feed-health">Sample data</span></div>
+          <div class="chart-footer"><span>Latest <b id="last-update">—</b></span><span id="feed-health">Connecting…</span></div>
         </section>
         <section class="panel last-handoff" id="last-handoff" data-outcome="0">
           <div class="panel-heading"><div><h2>Last handoff</h2><p>Expected and detected destination</p></div></div>
-          <span id="last-outcome" class="outcome good">Correct route</span>
+          <span id="last-outcome" class="outcome neutral">Awaiting data</span>
           <div class="route-visual"><div><span>Expected</span><strong id="expected-tray">—</strong></div><span class="route-line" aria-hidden="true"><i></i></span><div><span>Detected</span><strong id="observed-tray">—</strong></div></div>
           <div class="handoff-detail"><span>Handoff time</span><strong id="handoff-time">—</strong></div>
           <div class="handoff-detail"><span>Cloud entry</span><strong id="entry-number">—</strong></div>
           <p class="muted-note">Shows the last completed result. Select the next tray on the ESP32 rotary encoder.</p>
         </section>
       </div>
-
-      <section id="demo-controls" class="demo-controls" aria-label="Demonstration controls">
-        <div><span class="demo-tag">Demo</span><span>Try a parcel delivery</span></div>
-        <select id="demo-route" aria-label="Expected tray for demo"><option value="1">Expect Tray A</option><option value="2">Expect Tray B</option></select>
-        <button class="button" data-demo="1">Correct delivery</button><button class="button" data-demo="2">Wrong tray</button><button class="button" data-demo="3">Timeout</button>
-      </section>
 
       <section class="panel activity-panel" id="activity">
         <div class="panel-heading"><div><h2>Recent cloud updates</h2><p>ESP32 totals recorded at each cloud update</p></div><div class="table-actions"><select id="activity-filter" aria-label="Filter recent updates"><option value="all">All results</option><option value="2">Wrong tray</option><option value="3">Unconfirmed</option><option value="1">Correct route</option></select><button id="export-csv" class="button small">Export CSV</button></div></div>
@@ -69,25 +63,6 @@
     </div>
   </main>
 
-  <dialog id="setup-dialog" class="dialog setup-dialog" aria-labelledby="setup-title">
-    <form id="station-form" hidden>
-      <div class="dialog-heading"><div><p class="eyebrow">Parcel handoff verifier</p><h2 id="station-title">Open live station</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close station sign-in">×</button></div>
-      <p class="dialog-intro">Enter the station password to view the live Tray A and Tray B handoffs.</p>
-      <label for="station-password">Station password</label><input id="station-password" type="password" autocomplete="current-password" required>
-      <p id="station-error" class="form-error" role="status" hidden></p>
-      <div class="dialog-buttons"><button type="button" id="station-demo" class="button">Use demo mode</button><button class="button primary" id="station-submit" type="submit">Open station</button></div>
-      <p class="field-note">Your session lasts up to 8 hours. Use Lock when you finish on a shared device.</p>
-    </form>
-    <form id="connection-form"><div class="dialog-heading"><div><p class="eyebrow">Live connection</p><h2 id="setup-title">Connect your channel</h2></div><button type="button" class="icon-button close-dialog" aria-label="Close connection settings">×</button></div>
-      <p class="dialog-intro">Read the same seven fields your ESP32 already uploads.</p>
-      <label for="channel-id">ThingSpeak Channel ID</label><input id="channel-id" name="channel" inputmode="numeric" pattern="[0-9]+" value="3585570" required autocomplete="off">
-      <label for="read-key">Read API Key <span class="optional">optional for public channels</span></label><input id="read-key" name="key" type="password" autocomplete="new-password" spellcheck="false" placeholder="Find it in your channel’s API Keys tab">
-      <p class="field-note">Enter the Read API Key. Your Write and Alerts keys stay out of the dashboard. The Read key is kept in this browser tab’s session.</p>
-      <p id="setup-error" class="form-error" role="status" hidden></p>
-      <div class="dialog-buttons"><button type="button" id="start-demo" class="button">Use demo mode</button><button type="submit" class="button primary" id="connect-submit">Connect channel</button></div>
-      <a class="setup-help" href="setup.html">Set up email alerts in ThingSpeak</a>
-    </form>
-  </dialog>
   <dialog id="alerts-dialog" class="dialog alerts-dialog" aria-labelledby="alerts-title">
     <div class="dialog-heading"><div><p class="eyebrow">Needs attention</p><h2 id="alerts-title">Parcel alerts</h2></div><button class="icon-button close-dialog" aria-label="Close alerts">×</button></div>
     <div class="notification-options"><label><input type="checkbox" id="sound-toggle"> Sound on new alerts</label><button id="enable-notifications" class="button small">Enable desktop notifications</button></div>

@@ -12,8 +12,8 @@ this dashboard shows activity and flags wrong or unconfirmed deliveries.
 - Correct, wrong-tray and unconfirmed parcel counts
 - Expected and detected tray, handoff duration and recent activity
 - In-dashboard alerts, acknowledgments and optional sound/desktop notifications
-- Demo controls for demonstrating the workflow without hardware
-- Private live station with server-side ThingSpeak access
+- Public live dashboard that opens automatically without a password
+- Server-side ThingSpeak access; channel Read key stays private
 - Cloud email alerts through ThingSpeak MATLAB Analysis, React and TimeControl
 
 ## Run locally
@@ -27,10 +27,8 @@ node server.mjs
 ```
 
 Open `http://localhost:4173`. On Windows, `Start Dashboard.cmd` starts the server.
-Without configured server secrets, the dashboard supports demo mode and a manual
-channel connection. With all four environment values configured, enter the station
-password to open the private live feed. Sessions last up to eight hours; use **Lock**
-on shared computers.
+The dashboard opens directly in live mode. Configure the ThingSpeak channel and
+Read API Key in `.env`; no dashboard password or browser setup is needed.
 
 ## Environment variables
 
@@ -38,12 +36,11 @@ on shared computers.
 | --- | --- |
 | `THINGSPEAK_CHANNEL_ID` | The ESP32's ThingSpeak channel |
 | `THINGSPEAK_READ_API_KEY` | Server-only channel Read key |
-| `DASHBOARD_PASSWORD` | Random station password, at least 16 characters |
-| `DASHBOARD_SESSION_SECRET` | Random signing secret, at least 32 characters |
+| `THINGSPEAK_START_AFTER_ENTRY` | Exclude historical entries up to this ID (5 for this station) |
 
 `.env` is ignored by Git. `.env.example` contains placeholders only. The build
 copies a fixed list of public assets into `dist`; it does not embed environment
-values. The station API uses an HttpOnly, SameSite cookie, marked Secure on HTTPS.
+values. The public station API accepts read-only GET requests without signing in.
 The API key is never returned to the browser. Feed responses are not cached.
 
 The ESP32 Write API Key belongs in its firmware. The Alerts API Key belongs in
@@ -54,13 +51,18 @@ the private ThingSpeak analysis. Neither is needed by the deployed dashboard.
 1. Import this repository as a Vercel project using the **Other** framework preset.
 2. Keep the repository root as the root directory. `vercel.json` sets the build
    command to `node build.mjs` and output directory to `dist`.
-3. Add the four variables above to the Production environment. Use private values
+3. Add the channel and Read API Key variables above to the Production environment. Use private values
    from your local `.env`; do not commit that file.
-4. Deploy, then open the HTTPS URL and sign in with the station password.
+4. Deploy, then open the HTTPS URL. Live data loads automatically.
 
 Vercel runs `api/station.js` as a Node.js function. The function reads only the
-configured channel. Its public status endpoint returns setup/session status;
-the feed itself requires an authenticated session.
+configured channel. The dashboard and its sanitized feed are public; visitors
+do not need a password. No cloud write endpoint is exposed.
+
+Integration-test entries #1–#5 are excluded from the live dashboard, chart, CSV
+and alert history. The original rows remain in ThingSpeak. Until entry #6 or
+later arrives, the dashboard shows an empty live feed and zero counts. New
+uploads show the ESP32 counters as reported; counts restart when the board resets.
 
 ## ThingSpeak field map
 
@@ -85,8 +87,8 @@ Open the dashboard's **Email alert setup** page for the MATLAB template and clou
 rules. Email runs in ThingSpeak and works independently of the dashboard page.
 On 25 November 2026, labeled cloud test entry #5 produced a dashboard alert and
 ThingSpeak marked its email **sent**. Repeating the analysis did not resend it.
-The Vercel deployment was also tested: station sign-in, real feed reading,
-session restoration, locking, demo alerts and the mobile layout passed.
+The live dashboard now opens without sign-in and excludes those test entries.
+No simulated results are generated in the dashboard.
 
 ```sh
 node --test tests/*.test.mjs

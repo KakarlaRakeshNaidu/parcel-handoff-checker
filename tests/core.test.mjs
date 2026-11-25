@@ -88,3 +88,13 @@ test("demo produces a chronological feed with consistent counters", () => {
   assert.equal(rows.at(-1).wrong, 2);
   assert.equal(rows.at(-1).unconfirmed, 1);
 });
+
+
+test("first wrong upload after an observed empty live feed generates an alert", () => {
+  const baseline = { id: 5, correct: 0, wrong: 0, unconfirmed: 0 };
+  const row = { id: 6, time: Date.now(), correct: 0, wrong: 1, unconfirmed: 0,
+    outcome: 2, expected: 1, observed: 2, elapsed: 1200 };
+  const result = ingest(baseline, [row]);
+  assert.equal(result.alerts.length, 1);
+  assert.equal(result.alerts[0].kind, "wrong");
+});

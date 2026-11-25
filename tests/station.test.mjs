@@ -2,76 +2,60 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { handleStation } from "../lib/station.js";
 
-const env = { THINGSPEAK_CHANNEL_ID: "3585570", THINGSPEAK_READ_API_KEY: "private-test-key",
-  DASHBOARD_PASSWORD: "example-test-password-12345", DASHBOARD_SESSION_SECRET: "test-session-secret-that-is-over-32-characters" };
-const request = (method = "GET", path = "", headers = {}, body) => new Request("https://parcel.example/api/station" + path,
-  { method, headers, ...(body === undefined ? {} : { body }) });
-async function login(now = 1000) {
-  return handleStation(request("POST", "", { "Content-Type": "application/json", Origin: "https://parcel.example" },
-    JSON.stringify({ password: env.DASHBOARD_PASSWORD })), env, undefined, now);
-}
+const env = { THINGSPEAK_CHANNEL_ID: "3585570", THINGSPEAK_READ_API_KEY: "private-test-key" };
+const request = (method = "GET", query = "") => new Request("https://parcel.example/api/station" + query, { method });
+const feed = feeds => async () => Response.json({ channel: { api_key: "private metadata" }, feeds });
 
-test("hosted status exposes no credentials and configuration fails closed", async () => {
+test("live status requires only channel and Read key, without a password", async () => {
   const response = await handleStation(request("GET", "?status=1"), env);
-  assert.deepEqual(await response.json(), { enabled: true, channel: "3585570", authenticated: false });
+  assert.deepEqual(await response.json(), { enabled: true, channel: "3585570", startAfterEntry: 5 });
   assert.equal((await handleStation(request(), {})).status, 503);
-  assert.equal((await handleStation(request(), { ...env, DASHBOARD_PASSWORD: "short" })).status, 503);
+  assert.equal((await handleStation(request(), { ...env, THINGSPEAK_CHANNEL_ID: "bad" })).status, 503);
 });
-test("an unauthenticated reader never calls ThingSpeak", async () => {
-  const response = await handleStation(request(), env, () => { throw Error("Should not fetch"); });
-  assert.equal(response.status, 401);
-  assert.equal(response.headers.get("cache-control"), "no-store");
-});
-test("sign-in rejects incorrect passwords, non-JSON bodies and cross-site requests", async () => {
-  assert.equal((await handleStation(request("POST", "", { "Content-Type": "application/json" }, '{"password":"wrong"}'), env)).status, 401);
-  assert.equal((await handleStation(request("POST", "", {}, "password=wrong"), env)).status, 415);
-  assert.equal((await handleStation(request("POST", "", { Origin: "https://another.example" }, "{}"), env)).status, 403);
-  assert.equal((await handleStation(request("POST", "", { "Content-Type": "application/json" }, "{"), env)).status, 400);
-});
-test("a correct password creates a secure HttpOnly eight-hour session", async () => {
-  const response = await login();
-  assert.equal(response.status, 200);
-  const cookie = response.headers.get("set-cookie");
-  for (const part of ["HttpOnly", "SameSite=Strict", "Secure", "Max-Age=28800"]) assert.ok(cookie.includes(part));
-  assert.ok(!cookie.includes(env.DASHBOARD_PASSWORD));
-  const status = await handleStation(request("GET", "?status=1", { Cookie: cookie.split(";")[0] }), env, undefined, 2000);
-  assert.equal((await status.json()).authenticated, true);
-});
-test("the feed proxy reads only the configured channel and returns only parcel fields", async () => {
-  const cookie = (await login()).headers.get("set-cookie").split(";")[0];
-  let calls = 0;
-  const response = await handleStation(request("GET", "?channel=999", { Cookie: cookie }), env, async url => {
-    calls++;
+test("visitors can read live data without cookies and credentials remain server-only", async () => {
+  const response = await handleStation(request("GET", "?channel=999"), env, async url => {
     assert.equal(url.pathname, "/channels/3585570/feeds.json");
     assert.equal(url.searchParams.get("api_key"), env.THINGSPEAK_READ_API_KEY);
-    return Response.json({ channel: { api_key: "never-return-this" }, feeds: [
-      { entry_id: 5, created_at: "2026-11-25T10:21:00Z", field1: "1", status: "private metadata" }
+    return Response.json({ channel: { api_key: "private metadata" }, feeds: [
+      { entry_id: 6, created_at: "2026-11-25T11:00:00Z", field1: "1", status: "private metadata" }
     ] });
-  }, 2000);
+  });
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(response.headers.get("set-cookie"), null);
   const body = await response.json();
-  assert.equal(calls, 1);
-  assert.equal(body.feeds[0].entry_id, 5);
+  assert.equal(body.feeds[0].entry_id, 6);
   assert.equal(body.feeds[0].status, undefined);
-  assert.equal(body.channel.api_key, undefined);
+  assert.deepEqual(body.channel, { id: 3585570 });
   assert.ok(!JSON.stringify(body).includes(env.THINGSPEAK_READ_API_KEY));
 });
-test("expired, tampered and password-rotated sessions cannot read data", async () => {
-  const cookie = (await login()).headers.get("set-cookie").split(";")[0];
-  const denied = () => { throw Error("Should not fetch"); };
-  assert.equal((await handleStation(request("GET", "", { Cookie: cookie }), env, denied, 28801001)).status, 401);
-  assert.equal((await handleStation(request("GET", "", { Cookie: cookie + "tampered" }), env, denied, 2000)).status, 401);
-  assert.equal((await handleStation(request("GET", "", { Cookie: cookie }), { ...env, DASHBOARD_PASSWORD: "a-new-password-long-enough" }, denied, 2000)).status, 401);
+test("historical test entries are excluded while new ESP32 entries remain", async () => {
+  const response = await handleStation(request(), env, feed([
+    { entry_id: 1 }, { entry_id: 4 }, { entry_id: 5 }, { entry_id: 6 }, { entry_id: 7 }
+  ]));
+  assert.deepEqual((await response.json()).feeds.map(row => row.entry_id), [6, 7]);
+  const empty = await handleStation(request(), env, feed([{ entry_id: 5 }]));
+  assert.deepEqual((await empty.json()).feeds, []);
 });
-test("upstream errors never return secret URLs to the browser", async () => {
-  const cookie = (await login()).headers.get("set-cookie").split(";")[0];
-  const response = await handleStation(request("GET", "", { Cookie: cookie }), env,
-    () => { throw Error("https://api.thingspeak.com/?api_key=" + env.THINGSPEAK_READ_API_KEY); }, 2000);
-  assert.equal(response.status, 502);
-  assert.ok(!(await response.text()).includes(env.THINGSPEAK_READ_API_KEY));
+test("other channels retain their data and support an explicit starting entry", async () => {
+  const other = { ...env, THINGSPEAK_CHANNEL_ID: "123" };
+  const response = await handleStation(request(), other, feed([{ entry_id: 1 }]));
+  assert.equal((await response.json()).feeds.length, 1);
+  const cutoff = await handleStation(request(), { ...other, THINGSPEAK_START_AFTER_ENTRY: "10" }, feed([{ entry_id: 10 }, { entry_id: 11 }]));
+  assert.deepEqual((await cutoff.json()).feeds.map(row => row.entry_id), [11]);
 });
-test("locking the station removes the cookie and rejects cross-site logout", async () => {
-  const response = await handleStation(request("DELETE"), env);
-  assert.equal(response.status, 200);
-  assert.ok(response.headers.get("set-cookie").includes("Max-Age=0"));
-  assert.equal((await handleStation(request("DELETE", "", { Origin: "https://another.example" }), env)).status, 403);
+test("public endpoint is read-only and does not accept login or cloud writes", async () => {
+  for (const method of ["POST", "DELETE", "PUT"]) {
+    const response = await handleStation(request(method), env, () => { throw Error("Should not fetch"); });
+    assert.equal(response.status, 405);
+    assert.equal(response.headers.get("allow"), "GET");
+  }
+});
+test("upstream failures do not reveal credentials or secret URLs", async () => {
+  for (const upstream of [async () => { throw Error("api_key=" + env.THINGSPEAK_READ_API_KEY); },
+    async () => new Response("Unavailable", { status: 503 }), async () => Response.json({})]) {
+    const response = await handleStation(request(), env, upstream);
+    assert.equal(response.status, 502);
+    assert.ok(!(await response.text()).includes(env.THINGSPEAK_READ_API_KEY));
+  }
 });
