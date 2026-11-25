@@ -36,8 +36,10 @@ snapshots. Keep these rules enabled and avoid running simultaneous copies
 of the analysis. A very long outage that spans more than 100 snapshots can
 lose the details of earlier increases. The first row is a baseline; upload
 one baseline before testing a wrong parcel after enabling cloud alerts.
-The analysis and live account email delivery require testing in ThingSpeak
-with your real credentials.
+Live channel reading was verified in Chrome on 25 November 2026.
+The saved cloud analysis is "Parcel wrong-tray email" (analysis 431677).
+Email activation still needs an Alerts API Key and the React/TimeControl
+rules; no email delivery has been verified. See TESTING.txt for details.
 
 HOW DATA IS INTERPRETED
 Field 1 = Correct count       Field 2 = Wrong count

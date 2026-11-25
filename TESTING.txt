@@ -2,11 +2,19 @@ VERIFICATION PERFORMED
 
 Follow-up on 25 November 2026
 All 23 automated tests passed again. The local Git repository was initialized
-through WSL. The signed-in Chrome account shows the existing private Parcel
-Handoff Verification channel (3585570). Cloud activation has not been verified:
-Chrome window capture and clicks failed, and keyboard navigation did not
-reach the page. Restoring Chrome on the active unlocked desktop is required
-before configuring the account and testing real email delivery.
+through WSL. Authenticated reading of private channel 3585570 was verified
+in the user's Chrome profile using its existing Read API Key. The dashboard
+showed four real cloud entries, totals of 1 correct / 1 wrong / 1 unconfirmed,
+and the appropriate "No recent uploads" label for the old data.
+The Read key is kept in that dashboard tab's session, outside Git.
+
+The "Parcel wrong-tray email" analysis was created and saved at:
+https://thingspeak.mathworks.com/apps/matlab_analyses/431677/edit
+It has the real channel Read key and a UTC monitoring start time, but still
+has an Alerts API Key placeholder. The account shows no Alerts API Key.
+Generating that persistent credential requires the user's pending browser
+confirmation. React and TimeControl have not been enabled, and no email
+has been sent. The analysis has not been executed yet.
 
 UI polish follow-up
 The unslop pass was checked on desktop and at a 390px viewport. The mobile
@@ -42,15 +50,14 @@ Browser checks on localhost
 - Desktop and 390-pixel mobile layouts were visually reviewed.
 - Console error checks returned no JavaScript errors.
 
-LIVE ACTIVATION STILL REQUIRED
-No real Read API Key or Alerts API Key was supplied in this task.
-Successful authenticated reading of your channel and delivery of your
-account email must be verified after you enter those keys.
+EMAIL ACTIVATION STILL REQUIRED
+Live channel reading is verified. Email delivery still requires the Alerts
+API Key, execution of the saved analysis, and enabling React and TimeControl.
 The MATLAB analysis was checked against ThingSpeak's documented API;
-it was not executed inside the user's ThingSpeak account.
+it has not been executed inside the user's ThingSpeak account.
 Desktop notification delivery depends on your browser's notification
 permission and OS support. In-dashboard notifications were verified.
-No test emails or dashboard writes were sent to your account.
+No test emails or test channel writes were sent to your account.
 
 The existing ESP32 firmware can keep uploading its original seven fields.
 Use setup.html for the live activation instructions and current limits.
