@@ -8,13 +8,41 @@ showed four real cloud entries, totals of 1 correct / 1 wrong / 1 unconfirmed,
 and the appropriate "No recent uploads" label for the old data.
 The Read key is kept in that dashboard tab's session, outside Git.
 
-The "Parcel wrong-tray email" analysis was created and saved at:
+The "Parcel wrong-tray email" analysis was configured and saved at:
 https://thingspeak.mathworks.com/apps/matlab_analyses/431677/edit
-It has the real channel Read key and a UTC monitoring start time, but still
-has an Alerts API Key placeholder. The account shows no Alerts API Key.
-Generating that persistent credential requires the user's pending browser
-confirmation. React and TimeControl have not been enabled, and no email
-has been sent. The analysis has not been executed yet.
+The user authorized generating the missing Alerts API Key. The full key,
+including its special characters, is stored only in the private cloud code.
+An initial truncated-key request returned HTTP 401; the key was corrected
+and subsequent executions succeeded.
+
+React 139989: Numeric, On Data Insertion, channel 3585570, Field 2 > 0,
+MATLAB Analysis "Parcel wrong-tray email", each time condition is met.
+Its detail page showed a Last Ran time after the test insertion.
+TimeControl 99690: active, recurring every 5 minutes, same analysis.
+
+Live integration test: appended labeled entry #5 with counts 1 / 2 / 1,
+last result Wrong tray, expected Tray A, observed Tray B, time 1250 ms.
+The API returned entry ID 5. The live dashboard updated to #5 and Alerts 1.
+The cloud analysis accepted an email request. A subsequent execution showed:
+requestedAt 2026-11-25T10:21:05.431Z
+sentAt      2026-11-25T10:21:05.579Z
+subject     Parcel 3585570 wrong through #5
+status      sent
+and "No new wrong-parcel counts to report."
+This verifies ThingSpeak's SENT status and repeat-run deduplication.
+The recipient inbox and spam placement were not independently inspected.
+The test entry is retained in the channel; no earlier data was deleted.
+
+Final UI follow-up
+Neutral sidebar, parcel outline, IBM Plex Sans, compact figures, rust
+actions, and outcome-aware tray paths were reviewed on desktop and at
+390px width. Wrong route set data-outcome=2 and unread=1. Timeout created
+a second distinct alert. Acknowledge all set unread=0. A correct Tray B
+delivery showed B/B with data-outcome=1. Connection dialog and cloud setup
+navigation worked on mobile. Both pages had no horizontal overflow.
+Browser console error inspection returned no errors. All 23 tests passed
+after these changes. The user's live Chrome tab was refreshed and retained
+its authenticated connection and the real #5 result.
 
 UI polish follow-up
 The unslop pass was checked on desktop and at a 390px viewport. The mobile
@@ -50,14 +78,14 @@ Browser checks on localhost
 - Desktop and 390-pixel mobile layouts were visually reviewed.
 - Console error checks returned no JavaScript errors.
 
-EMAIL ACTIVATION STILL REQUIRED
-Live channel reading is verified. Email delivery still requires the Alerts
-API Key, execution of the saved analysis, and enabling React and TimeControl.
-The MATLAB analysis was checked against ThingSpeak's documented API;
-it has not been executed inside the user's ThingSpeak account.
+VERIFICATION LIMITS
+Live channel reading and the configured MATLAB analysis were exercised.
+ThingSpeak marked the test email sent; mailbox receipt was not checked.
+Physical ESP32 wiring, flashing and IR sensor operation were not retested
+in this dashboard task. The test used one explicitly labeled cloud entry.
 Desktop notification delivery depends on your browser's notification
 permission and OS support. In-dashboard notifications were verified.
-No test emails or test channel writes were sent to your account.
+One labeled test channel write and its resulting email were verified above.
 
 The existing ESP32 firmware can keep uploading its original seven fields.
 Use setup.html for the live activation instructions and current limits.

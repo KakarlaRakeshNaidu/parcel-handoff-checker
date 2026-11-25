@@ -4,44 +4,47 @@ Method credit
 Unslop by Damir Sokolovsky, https://heydamir.design/unslop
 https://x.com/heydamir — CC BY 4.0
 
-Audit
-The existing green interface needed a polish pass. The issues were small,
-low-contrast secondary text, mixed Unicode navigation symbols, decorative
-stat icons, four repetitive card frames, arbitrary spacing values, and
-uppercase section labels.
+Audit, final refinement on 25 November 2026
+The large green sidebar dominated otherwise quiet content.
+The letter P in a colored tile felt generic.
+The route line implied the same outcome for correct and wrong deliveries.
+The headline's supporting copy could fit almost any tracking dashboard.
+Figures and card padding made the statistics taller than necessary.
+The email setup page did not reflect the now-verified cloud configuration.
 
 Direction
-Product: Verify parcel handoffs in the lab and flag wrong destinations.
-Character: Calm and precise.
-World: A parcel sorting station.
-Moments: The delivery activity chart and expected-to-detected tray path.
-Signature: A fine connection line between the expected and detected tray.
+Product: Parcel handoff monitoring for a two-tray workstation.
+Character: Precise, calm, practical.
+World: Dispatch desks, tray labels and inspection records.
+Moments: The activity chart and the last parcel's route.
+Signature: A route line whose color reflects the recorded result.
 
 Passes
-Spacing: Used a 4px rhythm, compact navigation, consistent section gaps
-and equal internal padding.
-Color: Retained the green brand and moved the rest of the interface
-to neutral surfaces with three readable text roles.
-Icons: Replaced navigation symbols with 18px inline line icons at
-1.5px stroke. Removed decorative stat icons.
-Copy: Changed section labels to sentence case and shortened supporting
-labels around the actual parcel workflow.
-Type: Kept DM Sans. Added IBM Plex Mono for counts and technical
-metadata, with tabular figures and weights of 400–500.
-Layout: Joined the statistics into one compact row and gave the
-main activity chart more height.
-Details: Simplified result labels, standardized corners and borders,
-and refined the tray path in the last-handoff panel.
-Visuals: Used the actual chart and delivery data as the focal point.
+Spacing: Kept the 4px rhythm; reduced statistic padding to 20px and
+figure spacing to 12px / 8px, leaving more room for the chart.
+Color: Changed the sidebar to neutral #f0f1f2. Primary ink #25272b,
+secondary #535861, muted #686c73. Rust #994525 marks actions and the
+selection. Green, red and amber carry outcome meaning only.
+Icons: Retained 18px line navigation icons at 1.5px stroke; replaced
+the letter tile with an outline parcel in the same stroke style.
+Copy: Named Tray A and Tray B in the description and used the entry-to-tray
+workflow in the sidebar. Added a dated email verification record to setup.
+Type: IBM Plex Sans for the technical workstation character; IBM Plex Mono
+for figures and metadata. Figures are 32px with tabular numbers.
+Layout: Preserved features and section order. Kept the broad chart beside
+the narrower last-handoff panel and the four compact statistics above.
+Details: A correct route is solid green, a wrong route dashed red, and
+an unconfirmed route dashed amber. Text badges still state the outcome,
+so color is not the only signal. Tray labels have a restrained baseline.
+Visuals: Actual parcel counts and routes carry the visual detail.
 No generated image or image prompt was needed.
-Motion: Kept short color changes and the notification's 6px entrance.
-Reduced-motion preferences remain supported.
+Motion: Existing short color feedback and the notification's 6px entrance
+remain; reduced-motion preferences are respected.
 
 Verification
-23 automated tests passed.
-The refined desktop and 390px mobile layouts were visually reviewed.
-Wrong tray, timeout, acknowledgment, Tray B selection, connection dialog
-and email setup navigation were rechecked in the browser.
-Console error inspection returned no errors.
-Live account activation and email-delivery verification still need
-the user's ThingSpeak credentials, as described in TESTING.txt.
+All 23 automated tests passed. Desktop and 390px mobile layouts reviewed.
+Wrong tray, timeout, acknowledgment, correct Tray B, connection dialog and
+mobile email-setup navigation passed. No horizontal page overflow or console
+errors. The real Chrome dashboard stayed connected after the UI refresh.
+ThingSpeak marked the test email SENT; repeat-run deduplication passed.
+See TESTING.txt for the account configuration and limits of verification.

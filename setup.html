@@ -3,9 +3,11 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Parcel — Email alert setup</title><link rel="stylesheet" href="style.css"><script src="setup.js" type="module"></script></head>
 <body><main class="setup-page">
   <a href="index.html" class="back-link">Back to dashboard</a>
-  <p class="eyebrow" style="margin-top:34px">ThingSpeak cloud alerts</p>
-  <h1 style="margin-top:0">An email when a parcel goes wrong.</h1>
+  <p class="eyebrow" style="margin-top:32px">ThingSpeak cloud alerts</p>
+  <h1 style="margin-top:0">Email for wrong-tray parcels</h1>
   <p class="subtitle">Dashboard alerts work while the page is running. ThingSpeak can send an email to your account address even when this dashboard is closed.</p>
+
+  <section class="setup-card activation-record"><h2>Channel 3585570: email tested</h2><p>On 25 November 2026, the labeled test entry #5 produced a dashboard alert. ThingSpeak Alerts history marked its email <b>sent</b>. Running the analysis again reported no new wrong-parcel counts.</p><p class="subsection">Configured: <a href="https://thingspeak.mathworks.com/apps/matlab_analyses/431677/edit" target="_blank" rel="noreferrer">Parcel wrong-tray email</a> · <a href="https://thingspeak.mathworks.com/apps/reacts/139989" target="_blank" rel="noreferrer">React on new data</a> · <a href="https://thingspeak.mathworks.com/apps/timecontrols/99690" target="_blank" rel="noreferrer">Retry every 5 minutes</a></p><p class="field-note">This is a setup verification record, not a live email-status indicator. The instructions below are for setting up a different account or rebuilding the configuration.</p></section>
 
   <section class="setup-card"><h2>What you need</h2><p>Use the same channel as your ESP32. Enable its seven fields. Keep the Write API Key in the ESP32 sketch, use the Read API Key for this dashboard, and keep the Alerts API Key inside ThingSpeak MATLAB Analysis.</p>
     <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>1 · Correct routes</td><td>Correct-delivery counter</td></tr><tr><td>2 · Wrong tray</td><td>Wrong-delivery counter</td></tr><tr><td>3 · Unconfirmed</td><td>Timeout or ambiguous-delivery counter</td></tr><tr><td>4 · Last outcome</td><td>0 Ready, 1 Correct, 2 Wrong, 3 Unconfirmed</td></tr><tr><td>5 · Expected tray</td><td>0 None, 1 A, 2 B</td></tr><tr><td>6 · Observed tray</td><td>0 None, 1 A, 2 B</td></tr><tr><td>7 · Handoff time</td><td>Milliseconds</td></tr></tbody></table>

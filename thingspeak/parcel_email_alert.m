@@ -27,6 +27,9 @@ options = weboptions('HeaderFields', {'ThingSpeak-Alerts-API-Key', alertsKey}, .
     'Timeout', 15);
 history = webread('https://api.thingspeak.com/alerts/history', ...
     'count', 100, 'subject_contains', prefix, options);
+if ~isempty(history)
+    disp(struct2table(history));
+end
 watermark = 0;
 for i = 1:numel(history)
     subject = string(history(i).subject);

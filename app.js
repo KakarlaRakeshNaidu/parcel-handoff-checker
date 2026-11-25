@@ -198,9 +198,9 @@ function drawChart() {
   ctx.lineWidth = 1;
   for (let tick = 0; tick <= 2; tick++) {
     const y = chart.y + chart.h * (1 - tick / 2);
-    ctx.strokeStyle = "#e8ece9";
+    ctx.strokeStyle = "#e9ebee";
     ctx.beginPath(); ctx.moveTo(chart.x, y); ctx.lineTo(width - 8, y); ctx.stroke();
-    ctx.fillStyle = "#718078";
+    ctx.fillStyle = "#686c73";
     ctx.fillText(String(Math.round(max * tick / 2)), 6, y + 3);
   }
   const step = chart.w / display.length;
@@ -221,7 +221,7 @@ function drawChart() {
   display.forEach((row, i) => {
     if (i % interval !== 0) return;
     const time = new Date(row.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    ctx.fillStyle = "#718078";
+    ctx.fillStyle = "#686c73";
     ctx.textAlign = "center";
     ctx.fillText(time, chart.x + step * i + step / 2, height - 8);
   });
@@ -240,6 +240,7 @@ function render() {
   $("entry-number").textContent = latest ? "#" + latest.id : "—";
   $("last-outcome").textContent = latest ? outcomes[latest.outcome] : "Awaiting data";
   $("last-outcome").className = "outcome " + badge(latest?.outcome);
+  $("last-handoff").dataset.outcome = latest?.outcome ?? 0;
   $("last-update").textContent = latest ? new Date(latest.time).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
   $("mode-pill").textContent = mode === "demo" ? "Demo data" : "ThingSpeak";
   $("mode-pill").classList.toggle("live", mode === "live");

@@ -38,8 +38,14 @@ lose the details of earlier increases. The first row is a baseline; upload
 one baseline before testing a wrong parcel after enabling cloud alerts.
 Live channel reading was verified in Chrome on 25 November 2026.
 The saved cloud analysis is "Parcel wrong-tray email" (analysis 431677).
-Email activation still needs an Alerts API Key and the React/TimeControl
-rules; no email delivery has been verified. See TESTING.txt for details.
+The Alerts API Key is configured privately in that ThingSpeak analysis.
+React 139989 checks Field 2 > 0 on each insertion and runs that analysis.
+TimeControl 99690 retries the same analysis every 5 minutes.
+On 25 November 2026, labeled test entry #5 triggered a dashboard alert;
+ThingSpeak Alerts history marked its email SENT. A repeat analysis run
+reported no new counts. Inbox placement has not been independently checked.
+The test entry remains in the channel: totals are 1 correct, 2 wrong,
+1 unconfirmed until new firmware results update them. See TESTING.txt.
 
 HOW DATA IS INTERPRETED
 Field 1 = Correct count       Field 2 = Wrong count
