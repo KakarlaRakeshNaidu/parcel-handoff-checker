@@ -1,0 +1,47 @@
+PARCEL UI POLISH
+
+Method credit
+Unslop by Damir Sokolovsky, https://heydamir.design/unslop
+https://x.com/heydamir — CC BY 4.0
+
+Audit
+The existing green interface needed a polish pass. The issues were small,
+low-contrast secondary text, mixed Unicode navigation symbols, decorative
+stat icons, four repetitive card frames, arbitrary spacing values, and
+uppercase section labels.
+
+Direction
+Product: Verify parcel handoffs in the lab and flag wrong destinations.
+Character: Calm and precise.
+World: A parcel sorting station.
+Moments: The delivery activity chart and expected-to-detected tray path.
+Signature: A fine connection line between the expected and detected tray.
+
+Passes
+Spacing: Used a 4px rhythm, compact navigation, consistent section gaps
+and equal internal padding.
+Color: Retained the green brand and moved the rest of the interface
+to neutral surfaces with three readable text roles.
+Icons: Replaced navigation symbols with 18px inline line icons at
+1.5px stroke. Removed decorative stat icons.
+Copy: Changed section labels to sentence case and shortened supporting
+labels around the actual parcel workflow.
+Type: Kept DM Sans. Added IBM Plex Mono for counts and technical
+metadata, with tabular figures and weights of 400–500.
+Layout: Joined the statistics into one compact row and gave the
+main activity chart more height.
+Details: Simplified result labels, standardized corners and borders,
+and refined the tray path in the last-handoff panel.
+Visuals: Used the actual chart and delivery data as the focal point.
+No generated image or image prompt was needed.
+Motion: Kept short color changes and the notification's 6px entrance.
+Reduced-motion preferences remain supported.
+
+Verification
+23 automated tests passed.
+The refined desktop and 390px mobile layouts were visually reviewed.
+Wrong tray, timeout, acknowledgment, Tray B selection, connection dialog
+and email setup navigation were rechecked in the browser.
+Console error inspection returned no errors.
+Live account activation and email-delivery verification still need
+the user's ThingSpeak credentials, as described in TESTING.txt.

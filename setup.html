@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Parcel — Email alert setup</title><link rel="stylesheet" href="style.css"><script src="setup.js" type="module"></script></head>
+<body><main class="setup-page">
+  <a href="index.html" class="back-link">Back to dashboard</a>
+  <p class="eyebrow" style="margin-top:34px">ThingSpeak cloud alerts</p>
+  <h1 style="margin-top:0">An email when a parcel goes wrong.</h1>
+  <p class="subtitle">Dashboard alerts work while the page is running. ThingSpeak can send an email to your account address even when this dashboard is closed.</p>
+
+  <section class="setup-card"><h2>What you need</h2><p>Use the same channel as your ESP32. Enable its seven fields. Keep the Write API Key in the ESP32 sketch, use the Read API Key for this dashboard, and keep the Alerts API Key inside ThingSpeak MATLAB Analysis.</p>
+    <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>1 · Correct routes</td><td>Correct-delivery counter</td></tr><tr><td>2 · Wrong tray</td><td>Wrong-delivery counter</td></tr><tr><td>3 · Unconfirmed</td><td>Timeout or ambiguous-delivery counter</td></tr><tr><td>4 · Last outcome</td><td>0 Ready, 1 Correct, 2 Wrong, 3 Unconfirmed</td></tr><tr><td>5 · Expected tray</td><td>0 None, 1 A, 2 B</td></tr><tr><td>6 · Observed tray</td><td>0 None, 1 A, 2 B</td></tr><tr><td>7 · Handoff time</td><td>Milliseconds</td></tr></tbody></table>
+    <div class="info-box">The current firmware uploads totals and the last result. An increase in Field 2 catches wrong deliveries even when the last result is correct. A batch containing several parcels may only have tray details for its final parcel.</div>
+  </section>
+
+  <section class="setup-card"><h2>Create the email analysis</h2>
+    <ol><li>Sign in to <a href="https://thingspeak.mathworks.com/" target="_blank" rel="noreferrer">ThingSpeak</a>. In <b>Account → My Profile</b>, find your <b>Alerts API Key</b>. Check your remaining alert balance.</li><li>Go to <b>Apps → MATLAB Analysis → New → Custom</b>. Name it <b>Parcel wrong-tray email</b>.</li><li>Download the analysis below and paste it into the MATLAB code editor. Fill in your <b>Read API Key</b> and <b>Alerts API Key</b> inside ThingSpeak.</li><li>Save the analysis. Upload one baseline snapshot from the ESP32, then create the rules below. Complete a new wrong-tray test to verify delivery.</li></ol>
+    <div class="setup-fields"><div><label for="email-channel">Channel ID</label><input id="email-channel" inputmode="numeric" pattern="[0-9]+" value="3585570"></div><div><label for="monitor-from">Monitor from (UTC)</label><input id="monitor-from" readonly aria-describedby="monitor-note"></div></div>
+    <p id="monitor-note" class="field-note">The start time prevents old deliveries from producing emails. Generate the file when you are ready to enable monitoring.</p>
+    <button class="button primary" id="download-analysis">Download configured MATLAB analysis</button>
+    <p class="field-note" id="download-status" role="status"></p>
+    <details><summary>View the analysis template</summary><pre id="analysis-preview">Loading analysis…</pre></details>
+  </section>
+
+  <section class="setup-card"><h2>Run it automatically in ThingSpeak</h2>
+    <ol><li>Open <b>Apps → React → New React</b>. Choose <b>Numeric</b>, <b>On Data Insertion</b>, your channel, and <b>Field 2 is greater than 0</b>.</li><li>Set the action to <b>MATLAB Analysis</b> and select <b>Parcel wrong-tray email</b>. Choose <b>Run action each time the condition is met</b>, then save.</li><li>Create <b>Apps → TimeControl → New TimeControl</b>. Run that same analysis every <b>5 minutes</b> so a temporary network or email-limit failure gets another attempt.</li></ol>
+    <p>The analysis compares counter increases and uses Alerts history to avoid emailing the same cloud entry again. It reads the last 100 updates. It batches pending wrong counts into one message when needed.</p>
+    <div class="info-box">ThingSpeak allows 2 email alerts per 30 minutes, subject to your account balance. Repeated lab tests can reach this limit. Check Alerts history for accepted, sent, or failed status. The script’s display message confirms acceptance; delivery is confirmed in Alerts history.</div>
+  </section>
+
+  <section class="setup-card"><h2>Check the complete demonstration</h2><ol><li>Open the dashboard in demo mode. Press <b>Wrong tray</b>. Check the popup and the unread Alerts count. Open Alerts and acknowledge it.</li><li>Connect your live channel using its Read API Key. Trigger a wrong delivery on the hardware. Wait for the ESP32 to print <b>ThingSpeak saved entry</b>. The dashboard polls every 15 seconds.</li><li>Check the email inbox registered with ThingSpeak, including Spam. You can enable email notifications in your phone’s mail app.</li><li>Close the dashboard and repeat a hardware test. The cloud email rule should still run within the service’s limits.</li></ol>
+    <p class="subsection"><b>Desktop notifications</b> are optional. Enable them in the dashboard’s Alerts panel and allow your browser’s permission prompt. They need HTTPS or localhost, browser support, and this page to keep running. Browser background throttling can delay them.</p>
+    <p class="subsection"><b>Hardware timing</b> stays the same. The ESP32 uploads between handoffs, at least 20 seconds apart. This dashboard displays the latest completed result, not live IR sensor states. The counters restart when the ESP32 resets.</p>
+  </section>
+  <section class="setup-card"><h2>Official references</h2><p><a href="https://www.mathworks.com/help/thingspeak/react-app.html" target="_blank" rel="noreferrer">ThingSpeak React</a> · <a href="https://www.mathworks.com/help/thingspeak/sendalert.html" target="_blank" rel="noreferrer">Send Alert and rate limits</a> · <a href="https://www.mathworks.com/help/thingspeak/getalerthistory.html" target="_blank" rel="noreferrer">Alerts history</a> · <a href="https://www.mathworks.com/help/thingspeak/alerts-api.html" target="_blank" rel="noreferrer">Alerts API Key</a></p></section>
+</main></body></html>

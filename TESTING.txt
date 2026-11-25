@@ -1,0 +1,56 @@
+VERIFICATION PERFORMED
+
+Follow-up on 25 November 2026
+All 23 automated tests passed again. The local Git repository was initialized
+through WSL. The signed-in Chrome account shows the existing private Parcel
+Handoff Verification channel (3585570). Cloud activation has not been verified:
+Chrome window capture and clicks failed, and keyboard navigation did not
+reach the page. Restoring Chrome on the active unlocked desktop is required
+before configuring the account and testing real email delivery.
+
+UI polish follow-up
+The unslop pass was checked on desktop and at a 390px viewport. The mobile
+page had no horizontal overflow. Wrong-tray and timeout notifications,
+acknowledgment, Tray B selection, connection setup, and email setup
+navigation were rechecked. Console error inspection returned no errors.
+The 23 automated checks also passed after the chart styling changes.
+
+Automated tests
+23 Node.js tests passed with node --test tests/*.test.mjs.
+JavaScript syntax checked for app.js, setup.js, core.js, api.js,
+sw.js and server.mjs.
+
+The tests cover the seven-field map, missing and malformed values,
+empty feeds, old-entry deduplication, counter resets, batched deliveries,
+wrong counts followed by a correct last result, unconfirmed alerts,
+API URL/key encoding, API errors (400/401/404/429/500), aborted requests,
+network failures, and unreadable JSON.
+
+Browser checks on localhost
+- Demo counts, chart and recent-update table rendered.
+- Wrong tray produced the popup and unread alert.
+- Timeout produced a separate unconfirmed alert.
+- Correct demo delivery to Tray B showed B as expected and observed.
+- Acknowledge all set the unread count to zero.
+- Filtering displayed only matching updates.
+- CSV export control was exercised.
+- Sound option could be enabled and a new alert triggered.
+- A real request to channel 3585570 with no Read key showed the expected
+  HTTP 400 feedback. The UI retained demo mode after cancellation.
+- Email setup page loaded its MATLAB analysis template and the
+  configured download reported success.
+- Desktop and 390-pixel mobile layouts were visually reviewed.
+- Console error checks returned no JavaScript errors.
+
+LIVE ACTIVATION STILL REQUIRED
+No real Read API Key or Alerts API Key was supplied in this task.
+Successful authenticated reading of your channel and delivery of your
+account email must be verified after you enter those keys.
+The MATLAB analysis was checked against ThingSpeak's documented API;
+it was not executed inside the user's ThingSpeak account.
+Desktop notification delivery depends on your browser's notification
+permission and OS support. In-dashboard notifications were verified.
+No test emails or dashboard writes were sent to your account.
+
+The existing ESP32 firmware can keep uploading its original seven fields.
+Use setup.html for the live activation instructions and current limits.

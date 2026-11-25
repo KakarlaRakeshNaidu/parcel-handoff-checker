@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.js
+*.local.m
+local-config.js
+secrets/
+node_modules/
+test-results/
+.DS_Store
+Thumbs.db
